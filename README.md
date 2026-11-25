@@ -46,6 +46,17 @@ Unlike static textbooks or generic animated mockups, ArrayLab executes true clie
 - Visual elimination of search space (dimmed/eliminated sub-arrays).
 - **Time Complexity:** Best-case $O(1)$, Average-case $O(\log n)$, Worst-case $O(\log n)$.
 
+### 6. Sorting Algorithms (Assignment 2)
+- Dedicated **Sorting Algorithms** tab with quick links for all 7 required sorts:
+  1. **Selection Sort** ($O(n^2)$)
+  2. **Bubble Sort** ($O(n^2)$, with `swapped` early-stop optimization)
+  3. **Insertion Sort** ($O(n^2)$, adaptive $O(n)$ best case)
+  4. **Quick Sort** (Lomuto partitioning with Pivot & pointer tracking)
+  5. **Merge Sort** (Recursive divide & conquer with live Left/Right subarray merge view)
+  6. **Shell Sort** (Gapped insertion sort with shrinking gap phases)
+  7. **Radix Sort** (LSD Base-10 non-comparative sort with live `0–9` bucket visualization)
+- Each sort includes proportional bar visualization + cell/pointer stage, step-by-step simulation, conceptual explanation, live line-highlighted pseudocode algorithm, and complexity analysis.
+
 ### 6. Interactive Playback Engine (All Modules)
 - Full playback controls: `⏮ First`, `◀ Prev`, `▶ Play / ⏸ Pause`, `Next ▶`, `⏭ Last`, `🔄 Reset`.
 - Dynamic step descriptions with step counters (e.g., *Step 3 of 6*).

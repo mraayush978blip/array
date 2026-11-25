@@ -29,6 +29,10 @@ const App = {
     'binary-search': {
       title: 'Sorted Precondition Tip',
       tip: 'Always verify that your array is sorted before starting binary search! Each comparison halves the remaining search range, achieving logarithmic O(log n) time.'
+    },
+    'sorting': {
+      title: 'Sorting Algorithms Tip',
+      tip: 'Use the links at the top of the Sorting tab to switch between Selection, Bubble, Insertion, Quick, Merge, Shell, and Radix Sort with live simulations and pseudocode.'
     }
   },
 
@@ -46,16 +50,57 @@ const App = {
     if (window.DeletionModule) window.DeletionModule.init();
     if (window.LinearSearchModule) window.LinearSearchModule.init();
     if (window.BinarySearchModule) window.BinarySearchModule.init();
+    if (window.SortingModule) window.SortingModule.init();
 
     // Initial render of history
     if (window.historyManager) window.historyManager.render();
 
     // Initial route from URL hash if provided
-    const hash = window.location.hash.replace('#', '');
-    if (hash && document.getElementById(`tab-${hash}`)) {
-      this.switchTab(hash);
-    } else {
+    this.routeFromHash(window.location.hash);
+    window.addEventListener('hashchange', () => {
+      this.routeFromHash(window.location.hash);
+    });
+  },
+
+  routeFromHash(rawHash) {
+    const hash = (rawHash || '').replace('#', '').trim().toLowerCase();
+    if (!hash) {
       this.switchTab('home');
+      return;
+    }
+
+    // Support #sorting-<algo> and #<algo>-sort links
+    const sortAliases = {
+      'selection-sort': 'selection',
+      'bubble-sort': 'bubble',
+      'insertion-sort': 'insertion',
+      'quick-sort': 'quick',
+      'merge-sort': 'merge',
+      'shell-sort': 'shell',
+      'radix-sort': 'radix'
+    };
+
+    if (hash.startsWith('sorting-')) {
+      const algoId = hash.slice('sorting-'.length);
+      this.switchTab('sorting', false);
+      if (window.SortingModule && window.SORT_ALGORITHMS && window.SORT_ALGORITHMS[algoId]) {
+        window.SortingModule.selectAlgorithm(algoId, false);
+      }
+      return;
+    }
+
+    if (sortAliases[hash]) {
+      this.switchTab('sorting', false);
+      if (window.SortingModule) {
+        window.SortingModule.selectAlgorithm(sortAliases[hash], false);
+      }
+      return;
+    }
+
+    if (document.getElementById(`tab-${hash}`)) {
+      this.switchTab(hash, false);
+    } else {
+      this.switchTab('home', false);
     }
   },
 
@@ -140,6 +185,20 @@ const App = {
       });
     });
 
+    // Quick links directly to a specific sorting algorithm
+    const jumpSortLinks = document.querySelectorAll('[data-jump-sort]');
+    jumpSortLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const algoId = link.getAttribute('data-jump-sort');
+        this.switchTab('sorting', false);
+        if (window.SortingModule) {
+          window.SortingModule.selectAlgorithm(algoId, true);
+        }
+        this.closeMobileSidebar();
+      });
+    });
+
     // Mobile menu toggler & Backdrop
     const mobileToggle = document.getElementById('mobile-menu-toggle');
     const sidebarClose = document.getElementById('sidebar-close-btn');
@@ -178,7 +237,7 @@ const App = {
     if (backdrop) backdrop.classList.remove('active');
   },
 
-  switchTab(tabId) {
+  switchTab(tabId, updateHash = true) {
     const targetTab = document.getElementById(`tab-${tabId}`);
     if (!targetTab) return;
 
@@ -187,6 +246,7 @@ const App = {
     if (window.DeletionModule && window.DeletionModule.stepEngine) window.DeletionModule.stepEngine.pause();
     if (window.LinearSearchModule && window.LinearSearchModule.stepEngine) window.LinearSearchModule.stepEngine.pause();
     if (window.BinarySearchModule && window.BinarySearchModule.stepEngine) window.BinarySearchModule.stepEngine.pause();
+    if (window.SortingModule && window.SortingModule.stepEngine) window.SortingModule.stepEngine.pause();
 
     // Toggle active tab content
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -202,7 +262,11 @@ const App = {
     });
 
     this.activeTab = tabId;
-    window.location.hash = tabId;
+    if (updateHash) {
+      window.location.hash = tabId === 'sorting' && window.SortingModule
+        ? `sorting-${window.SortingModule.currentAlgoId}`
+        : tabId;
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Update dynamic learning tip
@@ -215,7 +279,13 @@ const App = {
   },
 
   updateLearningTip(tabId) {
-    const tipData = this.learningTips[tabId] || this.learningTips['home'];
+    let tipData = this.learningTips[tabId] || this.learningTips['home'];
+    if (tabId === 'sorting' && window.SortingModule && window.SORT_ALGORITHMS) {
+      const algo = window.SORT_ALGORITHMS[window.SortingModule.currentAlgoId];
+      if (algo) {
+        tipData = { title: `${algo.name} Tip`, tip: algo.tip };
+      }
+    }
     const titleEl = document.getElementById('global-tip-title');
     const textEl = document.getElementById('global-tip-text');
 
@@ -289,6 +359,7 @@ const App = {
       else if (this.activeTab === 'deletion') engine = window.DeletionModule.stepEngine;
       else if (this.activeTab === 'linear-search') engine = window.LinearSearchModule.stepEngine;
       else if (this.activeTab === 'binary-search') engine = window.BinarySearchModule.stepEngine;
+      else if (this.activeTab === 'sorting') engine = window.SortingModule.stepEngine;
 
       if (!engine) return;
 
